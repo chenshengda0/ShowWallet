@@ -1,0 +1,130 @@
+networks:
+  dev-dex:
+    driver:
+      bridge
+
+services:
+
+  dex-rabbitmq:
+    container_name: dex-rabbitmq
+    restart: always
+    build:
+      context: ./
+      dockerfile: rabbitmq/Dockerfile
+    environment:
+      - TZ=Asia/Shanghai
+      - RABBITMQ_DEFAULT_USER=dream
+      - RABBITMQ_DEFAULT_PASS=231510622abc
+      - PATH=$PATH:/opt/rabbitmq/sbin:/usr/sbin/:/usr/local/bin/:/bin:/opt/erlang/bin/
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks:
+      - dev-dex
+  
+  dex-haproxy:
+    container_name: dex-haproxy
+    restart: always
+    build:
+      context: ./
+      dockerfile: haproxy/Dockerfile
+    environment:
+      - TZ=Asia/Shanghai
+      - PATH=$PATH:/usr/sbin/:/usr/local/bin/:/bin:/usr/local/sbin
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - 5670:5670
+      - 35672:35672
+      - 35674:35674
+      - 9999:9999
+    depends_on:
+      - dex-rabbitmq
+    networks:
+      - dev-dex
+  
+  dex-redis:
+    container_name: dex-redis
+    restart: always
+    image: redis
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - 6379:6379
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      - dev-dex
+
+  dex-mysql:
+    container_name: dex-mysql
+    restart: always
+    image: mysql:8
+    environment:
+      - MYSQL_ROOT_PASSWORD=231510622abc
+      - TZ=Asia/Shanghai
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci --max-connections=100000 --sql_mode="STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION" --lower_case_table_names=2
+    ports:
+      - 3306:3306
+    volumes:
+      - ./mysql/datadir:/var/lib/mysql
+      #- ./mysql/conf:/etc/mysql/conf.d
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks:
+      - dev-dex
+
+  dex-phpmyadmin:
+    container_name: dex-phpmyadmin
+    restart: always
+    image: phpmyadmin
+    ports:
+      - 8888:80
+    environment:
+      - TZ=Asia/Shanghai
+      - PMA_ARBITRARY=0           
+      - PMA_HOST=dex-mysql        
+      - PMA_PORT=3306             
+      - PMA_USER=root            
+      - PMA_PASSWORD=231510622abc
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks:
+      - dev-dex
+
+  dex-server:
+    container_name: dex-server
+    restart: always
+    build:
+      context: ./
+      dockerfile: server/Dockerfile
+    volumes:
+      - ./server/build:/mnt
+    ports:
+      - 9527:9527
+    environment:
+      - TZ=Asia/Shanghai
+    depends_on:
+      - dex-rabbitmq
+      - dex-haproxy
+      - dex-redis
+      - dex-mysql
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks:
+      - dev-dex
+
+  dex-nginx:
+    image: nginx:latest
+    restart: always
+    container_name: dex-nginx
+    volumes:
+      - ./web/html:/usr/share/nginx/html
+      - ./web/conf.d:/etc/nginx/conf.d
+    ports:
+      - 80:80
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks:
+      - dev-dex
+
