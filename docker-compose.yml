@@ -3,6 +3,9 @@ networks:
     driver:
       bridge
 
+volumes:
+  - datadir:
+
 services:
 
   dex-rabbitmq:
@@ -66,8 +69,7 @@ services:
     ports:
       - 3306:3306
     volumes:
-      - ./mysql/datadir:/var/lib/mysql
-      #- ./mysql/conf:/etc/mysql/conf.d
+      - datadir:/var/lib/mysql
       - ./mysql/init:/docker-entrypoint-initdb.d
     extra_hosts:
       - host.docker.internal:host-gateway
