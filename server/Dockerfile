@@ -9,4 +9,4 @@ WORKDIR /mnt
 
 EXPOSE 9527
 
-CMD chmod -R 777 /mnt/start.sh && dos2unix /mnt/start.sh && /mnt/start.sh && while true; do date; sleep 30s; done 
+CMD cd /mnt && yarn && yarn start && while true; do date; sleep 30s; done 
