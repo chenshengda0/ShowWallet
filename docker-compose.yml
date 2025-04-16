@@ -116,17 +116,17 @@ services:
     networks:
       - dev-dex
 
-  dex-nginx:
-    image: nginx:latest
-    restart: always
-    container_name: dex-nginx
-    volumes:
-      - ./web/html:/usr/share/nginx/html
-      - ./web/conf.d:/etc/nginx/conf.d
-    ports:
-      - 80:80
-    extra_hosts:
-      - host.docker.internal:host-gateway
-    networks:
-      - dev-dex
+  # dex-nginx:
+  #   image: nginx:latest
+  #   restart: always
+  #   container_name: dex-nginx
+  #   volumes:
+  #     - ./web/html:/usr/share/nginx/html
+  #     - ./web/conf.d:/etc/nginx/conf.d
+  #   ports:
+  #     - 80:80
+  #   extra_hosts:
+  #     - host.docker.internal:host-gateway
+  #   networks:
+  #     - dev-dex
 
